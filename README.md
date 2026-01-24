@@ -16,9 +16,13 @@
 * 프론트엔드 : Vue, PRIMEVUE, HTML, CSS, JavaScript
 * 백엔드 : Node, express
 
-# 4. 사이트 구성도
+# 4. 데이터 베이스
+![이미지 경로 오류](database.png)
 
-# 5. 데이터 베이스
+
+# 5. 사이트 구성도
+![이미지 경로 오류](flow.png)
+
 
 #  프로젝트 팀 구성 및 역할
  + **기준정보** : 박희찬 / 김동우
