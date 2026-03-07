@@ -91,8 +91,8 @@ const detailForm = ref(onResetDetailForm());
 // -------------------------------
 // 모달 데이터
 // -------------------------------
-const showProcessModal1 = ref(false); // 흐름도 코드/명 모달 호출
-const processModalList1 = ref([]); // 모달 데이터
+const showProcessModal = ref(false); // 흐름도 코드/명 모달 호출
+const processModalList = ref([]); // 모달 데이터
 
 const showProcessModal2 = ref(false); // 제품 코드/명 모달 호출
 const processModalList2 = ref([]); // 모달 데이터
@@ -102,7 +102,7 @@ const processDetailModalList = ref([]); // 모달 데이터
 
 const showProductSearchModal = ref(false); // ProductSearchModal 모달
 
-const selectedProcessModal1 = ref([]);
+const selectedProcessModal = ref([]);
 const selectedProcessModal2 = ref([]);
 
 // // -------------------------------
@@ -114,14 +114,14 @@ const rowClass = (rowData) => {
     return selectedProcess.value && rowData.id === selectedProcess.value.id ? 'selected-row' : '';
 };
 
-// 흐름도 코드/명 모달호출
-const openProcessModal1 = async () => {
+// プロジェクトコード・名を照会
+const openProcessModal = async () => {
     try {
         const response = await axios.get('/api/process/list');
-        processModalList1.value = response.data;
-        showProcessModal1.value = true;
+        processModalList.value = response.data;
+        showProcessModal.value = true;
     } catch (error) {
-        console.error('데이터 조회 모달 실패', error.message);
+        console.error('プロジェクトコード照会失敗', error.message);
     }
 };
 // 제품 코드/명 모달호출
@@ -303,7 +303,8 @@ const onUpdate = () => {
             <div class="search-row">
                 <div class="field">
                     <label for="processCode">흐름도코드</label>
-                    <InputText id="processCode" v-model="searchForm.processCode" placeholder="흐름도코드 선택" readonly @click="openProcessModal1" />
+                    <InputText id="processCode" v-model="searchForm.processCode" 
+                               placeholder="흐름도코드 선택" readonly @click="openProcessModal" />
                 </div>
 
                 <div class="field">
