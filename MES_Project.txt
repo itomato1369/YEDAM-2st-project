@@ -26,6 +26,6 @@ MES_Project
     │       └─baseinfo
     │                ├─ProcessFlow.vue
     │                └─LineInfo.vue
-    │ 　
-
+    │ 　 
     └─vite.config.mjs 
+
