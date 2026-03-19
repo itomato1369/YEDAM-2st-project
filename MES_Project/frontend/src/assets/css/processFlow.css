@@ -1,0 +1,162 @@
+.process-page {
+    padding: 1rem;
+    height: 100%;
+}
+
+.process-card {
+    padding: 1.5rem;
+}
+
+/* 검색 영역 */
+.search-panel {
+    margin-bottom: 1rem;
+}
+
+.search-row {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 1rem;
+    align-items: end;
+}
+.search-row .field {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; /* 내용을 아래쪽으로 밀어서 다른 인풋과 하단 맞춤 */
+}
+
+.button-group {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 20px;
+    justify-content: center;
+}
+
+/* 메인 레이아웃 */
+.content-layout {
+    display: grid;
+    grid-template-columns: 2.1fr 1.7fr;
+    gap: 1.5rem;
+}
+.selected-row {
+    background-color: #cce5ff !important; /* 선택된 row 강조 */
+}
+/* 좌측 영역 */
+.left-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.list-header-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.sub-process-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.5rem;
+}
+
+.sub-process-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.hint-text {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: #777;
+}
+
+/* 우측 영역 */
+.right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.right-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.right-header-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.detail-form {
+    border: 1px solid var(--surface-border);
+    border-radius: 4px;
+    padding: 1rem;
+    background: var(--surface-card);
+}
+.detail-form .field {
+    display: flex;
+    flex-direction: column;
+}
+.detail-form .field label {
+    margin-bottom: 0.25rem;
+    white-space: nowrap; /* ⚠️ 등록일자 라벨 줄 바꿈 방지 (핵심 해결) */
+}
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 1.5rem;
+}
+
+.form-grid .full-width {
+    grid-column: 1 / -1;
+}
+
+.warning-text {
+    margin-top: auto;
+    text-align: right;
+    font-size: 0.8rem;
+    color: #c0392b;
+}
+
+/* 상태 표시 */
+.status-tag {
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    font-size: 0.75rem;
+}
+
+.status-active {
+    background-color: #e6f7e9;
+    color: #1e8449;
+}
+
+.status-inactive {
+    background-color: #fdecea;
+    color: #c0392b;
+}
+
+@media (max-width: 1200px) {
+    .content-layout {
+        grid-template-columns: 1fr;
+    }
+}
+.p-inputtext-tight {
+    width: 60px;
+}
+.p-datatable-sm .p-inputnumber {
+    width: 100%;
+}
+.sub-process-table :deep(.p-inputnumber .p-inputnumber-input) {
+    width: 60px;
+}
+.process-list-table :deep(tr.selected-row) {
+    background-color: rgba(204, 229, 255) !important;
+    color: inherit !important;
+}

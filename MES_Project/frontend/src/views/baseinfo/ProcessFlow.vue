@@ -1,10 +1,24 @@
 <script setup>
 // Vue의 반응성을 부여하기 위해 ref함수를 가져옴
 import { ref } from 'vue';
-// 백엔드 서버와 통신하기 위한 HTTP 클라이언트인 Axios를 가져옴
-import axios from 'axios';
 // 전체 제품 품목 조회
 import ProductSearchModal from '@/components/order/ProductSelectModal.vue';
+// function import
+import { applySeqChange, 
+    onResetDetailForm, 
+    rowClass, 
+    openProcessModal, 
+    openProcessModal2,
+    openProcessDetail,
+    openItem,
+    selectProcessFromModal,
+    selectProcessFromModal2,
+    onResetSearch,
+    onResetInfo,
+    onSearch,
+    onSelectProcess,
+    onProductSelect
+ } from '@/assets/js/processFlow.js';
 
 // PrimeVue 컴포넌트는 전역 등록되어 있다고 가정 (Sakai 템플릿 기본 구조)
 // 조회 필드
@@ -19,46 +33,6 @@ const searchForm = ref({
 // 공정 흐름도
 const processList = ref([]);
 
-// 순서변경
-const applySeqChange = (row) => {
-    const list = subProcessData.value; // 이제 원본 배열에 대한 참조입니다.
-    // 1. 현재 위치(fromIndex) 찾기
-
-    const fromIndex = list.indexOf(row);
-    if (fromIndex === -1) return;
-
-    const currentNo = fromIndex + 1;
-    let targetNo = Number(row.poNumber); // 2-1. 숫자가 아니거나, 1보다 작으면 -> 원래 순서로 되돌리고 끝
-
-    if (!Number.isInteger(targetNo) || targetNo < 1) {
-        row.poNumber = currentNo;
-        return;
-    } // 2-2. 입력값이 원래 순서랑 같으면 -> 그냥 아무 것도 안 함
-
-    if (targetNo === currentNo) {
-        return;
-    } // 3. 범위 보정 (리스트 길이보다 크면 맨 마지막으로)
-
-    const len = list.length;
-    if (targetNo > len) targetNo = len;
-
-    const toIndex = targetNo - 1; // 4. 배열에서 해당 row를 빼고 (원본 배열 직접 조작)
-
-    const [moved] = list.splice(fromIndex, 1); // 5. 원하는 위치에 끼워 넣기 (원본 배열 직접 조작)
-
-    list.splice(toIndex, 0, moved); // 6. poNumber 를 1,2,3,... 으로 다시 부여
-
-    list.forEach((item, idx) => {
-        // 객체의 속성을 변경하는 것도 반응성
-        item.poNumber = idx + 1;
-    });
-
-    // 7. 반영
-    // 하지만, 마지막에 원본을 **다시 대입하여** Vue의 반응성 시스템에 명확히 알림
-    // 또는 `subProcessData.value = [...list];` 처럼 얕게 복사하여 대입
-    subProcessData.value = list;
-};
-
 // 공정 흐름도
 const selectedProcess = ref(null);
 
@@ -72,18 +46,6 @@ const processStructureOptions = [
     { label: '정형', value: 'p2' }
 ];
 
-// 기준정보 초기화
-const onResetDetailForm = () => ({
-    id: null,
-    processCode: '',
-    processName: '',
-    itemCode: '',
-    itemName: '',
-    processStructure: '',
-    reg: '',
-    regDate: '',
-    remark: ''
-});
 
 // 기준정보
 const detailForm = ref(onResetDetailForm());
@@ -105,196 +67,9 @@ const showProductSearchModal = ref(false); // ProductSearchModal 모달
 const selectedProcessModal = ref([]);
 const selectedProcessModal2 = ref([]);
 
-// // -------------------------------
-// // 이벤트 핸들러
-// // -------------------------------
 
-// Datatalbe 선택
-const rowClass = (rowData) => {
-    return selectedProcess.value && rowData.id === selectedProcess.value.id ? 'selected-row' : '';
-};
-
-// プロジェクトコード・名を照会
-const openProcessModal = async () => {
-    try {
-        const response = await axios.get('/api/process/list');
-        processModalList.value = response.data;
-        showProcessModal.value = true;
-    } catch (error) {
-        console.error('プロジェクトコード照会失敗', error.message);
-    }
-};
-// 제품 코드/명 모달호출
-const openProcessModal2 = async () => {
-    try {
-        const response = await axios.get('/api/process/list');
-        processModalList2.value = response.data;
-        showProcessModal2.value = true;
-    } catch (error) {
-        console.error('데이터 조회 모달 실패', error.message);
-    }
-};
-
-// 공정 코드를 클릭하면 po_tbl 공정상세 흐름도 호출
-const openProcessDetail = async (rowData) => {
-    if (!rowData) {
-        console.error('공정 상세 정보 모달 실패');
-        return;
-    }
-    try {
-        const response = await axios.get('/api/process/podetail');
-        processDetailModalList.value = response.data;
-        showPoDetailModal.value = true;
-    } catch (error) {
-        console.error('공정 상세정보 모달 실패', error.message);
-    }
-};
-
-// 기준정보의 제품코드/제품명 호출
-const openItem = async () => {
-    // ProductSearchModal 내부에서 검색 API를 처리 단순히 모달을 열도록
-    showProductSearchModal.value = true;
-};
-
-// 흐름도 코드/명 값 전달
-const selectProcessFromModal1 = (event) => {
-    const row = event.data;
-    searchForm.value.processCode = row.processCode;
-    searchForm.value.processName = row.processName;
-
-    selectedProcessModal1.value = null; // 모달 닫기
-    showProcessModal1.value = false; //
-};
-// 제품 코드/명 값 전달
-const selectProcessFromModal2 = (event) => {
-    const row = event.data;
-    searchForm.value.itemCode = row.itemCode;
-    searchForm.value.itemName = row.itemName;
-
-    selectedProcessModal2.value = null; // 모달 닫기
-    showProcessModal2.value = false;
-};
-// 초기화
-const onResetSearch = () => {
-    searchForm.value = {
-        processCode: null,
-        processName: null,
-        itemCode: null,
-        itemName: null,
-        regDate: null
-    };
-};
-// 기준 정보 값 초기화
-const onResetInfo = () => {
-    detailForm.value = {
-        processCode: null,
-        processName: null,
-        itemCode: null,
-        itemName: null,
-        processStructure: null,
-        reg: null,
-        regDate: null,
-        remark: null
-    };
-};
-// 조회
-const onSearch = async () => {
-    const params = searchForm.value;
-    console.log(params);
-
-    const queryParams = Object.keys(params).reduce((acc, key) => {
-        const value = params[key];
-        if (value !== null && value !== '') {
-            acc[key] = value;
-        }
-        return acc;
-    }, {});
-    try {
-        const response = await axios.get('/api/process/list', { params: queryParams });
-        processList.value = response.data;
-        console.log('조회 성공:', response.data);
-        selectedProcess.value = null;
-        detailForm.value = onResetDetailForm();
-        subProcessData.value = [];
-    } catch (error) {
-        console.error('공정 흐름도 목록 조회 실패', error.message);
-        processList.value = [];
-        detailForm.value = onResetDetailForm();
-    }
-};
-
-// 공정 흐름도를 선택 시 기준정보에 값이 들어가고 흐름도 상세 조회
-const onSelectProcess = async () => {
-    const row = selectedProcess.value;
-
-    if (!row) {
-        detailForm.value = onResetDetailForm();
-        subProcessData.value = [];
-        return;
-    }
-
-    detailForm.value = { ...row };
-
-    try {
-        const response = await axios.get('/api/process/detail', {
-            params: { processCode: row.processCode }
-        });
-
-        subProcessData.value = response.data.map((item, idx) => ({
-            ...item,
-            poNumber: item.poNumber ?? idx + 1
-        }));
-    } catch (error) {
-        console.error('흐름도 상세 조회 실패', error.message);
-        subProcessData.value = [];
-    }
-};
-
-// ProductSearchModal에서 제품을 선택했을 때 호출될 핸들러 추가
-const onProductSelect = ({ row }) => {
-    detailForm.value.itemCode = row.prod_code;
-    detailForm.value.itemName = row.prod_name;
-};
-
-const onDeleteProcess = () => {
-    if (!selectedProcess.value) return;
-    // TODO: 삭제 API 연동
-    processList.value = processList.value.filter((b) => b.id !== selectedProcess.value.id);
-    selectedProcess.value = null;
-    detailForm.value = onResetDetailForm();
-    subProcessData.value = [];
-};
-
-const onAddSubProcess = () => {
-    const maxId = subProcessData.value.reduce((max, item) => Math.max(max, item.id || 0), 0);
-    const nextId = maxId + 1;
-    const maxPoNumber = subProcessData.value.reduce((max, item) => Math.max(max, Number(item.poNumber) || 0), 0);
-    subProcessData.value.push({
-        id: nextId,
-        poNumber: maxPoNumber + 1,
-        poCode: '',
-        poName: '',
-        machine: ''
-    });
-};
-
-const onDeleteSubProcess = () => {
-    const ids = new Set(selectedSubProcess.value.map((m) => m.id));
-    subProcessData.value = subProcessData.value.filter((m) => !ids.has(m.id));
-    selectedSubProcess.value = [];
-};
-
-const onCreate = () => {
-    // TODO: 등록 API 연동
-    console.log('등록', detailForm.value, subProcessData.value);
-};
-
-const onUpdate = () => {
-    // TODO: 수정 API 연동
-    console.log('수정', detailForm.value, subProcessData.value);
-};
 </script>
-<!-- src/views/ProcessFlow.vue -->
+
 <template>
     <div class="p-fluid process-page">
         <!-- 상단 헤더(화면ID, 화면명 등)는 공통 레이아웃에서 처리한다고 보고 생략 -->
@@ -303,30 +78,48 @@ const onUpdate = () => {
             <div class="search-row">
                 <div class="field">
                     <label for="processCode">흐름도코드</label>
-                    <InputText id="processCode" v-model="searchForm.processCode" 
-                               placeholder="흐름도코드 선택" readonly @click="openProcessModal" />
+                    <InputText id="processCode" 
+                               v-model="searchForm.processCode" 
+                               placeholder="흐름도코드 선택" 
+                               readonly 
+                               @click="openProcessModal" />
                 </div>
 
                 <div class="field">
                     <label for="processName">흐름도명</label>
-                    <InputText id="processName" v-model="searchForm.processName" placeholder="흐름도명 선택" readonly @click="openProcessModal1" />
+                    <InputText id="processName" 
+                               v-model="searchForm.processName" 
+                               placeholder="흐름도명 선택" 
+                               readonly
+                               @click="openProcessModal" />
                 </div>
 
                 <div class="field">
                     <label for="itemCode">제품코드</label>
-                    <InputText id="itemCode" v-model="searchForm.itemCode" placeholder="제품코드 선택" readonly @click="openProcessModal2" />
+                    <InputText id="itemCode" 
+                               v-model="searchForm.itemCode" 
+                               placeholder="제품코드 선택" 
+                               readonly 
+                               @click="openProcessModal2" />
                 </div>
 
                 <div class="field">
                     <label for="itemName">제품명</label>
-                    <InputText id="itemName" v-model="searchForm.itemName" placeholder="제품명 선택" readonly @click="openProcessModal2" />
+                    <InputText id="itemName"
+                               v-model="searchForm.itemName" 
+                               placeholder="제품명 선택"
+                               readonly 
+                               @click="openProcessModal2" />
                 </div>
 
                 <div class="field date-range-field flex flex-column">
                     <label class="mb-1">등록일자</label>
 
                     <div class="align-items-center gap-2">
-                        <Calendar v-model="searchForm.regDate" dateFormat="yy-mm-dd" :showIcon="true" class="w-full" />
+                        <Calendar v-model="searchForm.regDate" 
+                                  dateFormat="yy-mm-dd" 
+                                  :showIcon="true" 
+                                  class="w-full" />
                     </div>
                 </div>
             </div>
@@ -338,8 +131,13 @@ const onUpdate = () => {
         </div>
 
         <!-- 흐름도 코드/명 모달 -->
-        <Dialog v-model:visible="showProcessModal1" header="흐름도 코드/명 선택" modal>
-            <DataTable :value="processModalList1" v-model:selection="selectedProcessModal1" selectionMode="single" @rowSelect="selectProcessFromModal1" :paginator="true" :rows="10">
+        <Dialog v-model:visible="showProcessModal" header="흐름도 코드/명 선택" modal>
+            <DataTable :value="processModalList" 
+                        v-model:selection="selectedProcessModal" 
+                        selectionMode="single" 
+                        @rowSelect="selectProcessFromModal" 
+                        :paginator="true" 
+                        :rows="10">
                 <Column field="processCode" header="흐름도코드"></Column>
                 <Column field="processName" header="흐름도명"></Column>
             </DataTable>
@@ -347,7 +145,12 @@ const onUpdate = () => {
 
         <!-- 제품 코드/명 모달 -->
         <Dialog v-model:visible="showProcessModal2" header="제품 코드/명 선택" modal>
-            <DataTable :value="processModalList2" v-model:selection="selectedProcessModal2" selectionMode="single" @rowSelect="selectProcessFromModal2" :paginator="true" :rows="10">
+            <DataTable :value="processModalList2" 
+                       v-model:selection="selectedProcessModal2" 
+                       selectionMode="single" 
+                       @rowSelect="selectProcessFromModal2" 
+                       :paginator="true" 
+                       :rows="10">
                 <Column field="itemCode" header="제품코드"></Column>
                 <Column field="itemName" header="제품명"></Column>
             </DataTable>
@@ -362,7 +165,10 @@ const onUpdate = () => {
                         <span>공정흐름도</span>
                         <div>검색 결과 {{ processList.length }}건</div>
                         <div class="list-header-buttons">
-                            <Button label="삭제" class="p-button-danger p-button-sm" :disabled="!selectedProcess" @click="onDeleteProcess" />
+                            <Button label="삭제" 
+                                    class="p-button-danger p-button-sm" 
+                                    :disabled="!selectedProcess" 
+                                    @click="onDeleteProcess" />
                         </div>
                     </div>
 
@@ -486,166 +292,5 @@ const onUpdate = () => {
 </template>
 
 <style scoped>
-.process-page {
-    padding: 1rem;
-    height: 100%;
-}
-
-.process-card {
-    padding: 1.5rem;
-}
-
-/* 검색 영역 */
-.search-panel {
-    margin-bottom: 1rem;
-}
-
-.search-row {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 1rem;
-    align-items: end;
-}
-.search-row .field {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end; /* 내용을 아래쪽으로 밀어서 다른 인풋과 하단 맞춤 */
-}
-
-.button-group {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 20px;
-    justify-content: center;
-}
-
-/* 메인 레이아웃 */
-.content-layout {
-    display: grid;
-    grid-template-columns: 2.1fr 1.7fr;
-    gap: 1.5rem;
-}
-.selected-row {
-    background-color: #cce5ff !important; /* 선택된 row 강조 */
-}
-/* 좌측 영역 */
-.left-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.list-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.list-header-buttons {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.sub-process-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 0.5rem;
-}
-
-.sub-process-buttons {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.hint-text {
-    margin-top: 0.5rem;
-    font-size: 0.8rem;
-    color: #777;
-}
-
-/* 우측 영역 */
-.right-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.right-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.right-header-buttons {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.detail-form {
-    border: 1px solid var(--surface-border);
-    border-radius: 4px;
-    padding: 1rem;
-    background: var(--surface-card);
-}
-.detail-form .field {
-    display: flex;
-    flex-direction: column;
-}
-.detail-form .field label {
-    margin-bottom: 0.25rem;
-    white-space: nowrap; /* ⚠️ 등록일자 라벨 줄 바꿈 방지 (핵심 해결) */
-}
-.form-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem 1.5rem;
-}
-
-.form-grid .full-width {
-    grid-column: 1 / -1;
-}
-
-.warning-text {
-    margin-top: auto;
-    text-align: right;
-    font-size: 0.8rem;
-    color: #c0392b;
-}
-
-/* 상태 표시 */
-.status-tag {
-    padding: 0.2rem 0.4rem;
-    border-radius: 3px;
-    font-size: 0.75rem;
-}
-
-.status-active {
-    background-color: #e6f7e9;
-    color: #1e8449;
-}
-
-.status-inactive {
-    background-color: #fdecea;
-    color: #c0392b;
-}
-
-@media (max-width: 1200px) {
-    .content-layout {
-        grid-template-columns: 1fr;
-    }
-}
-.p-inputtext-tight {
-    width: 60px;
-}
-.p-datatable-sm .p-inputnumber {
-    width: 100%;
-}
-.sub-process-table :deep(.p-inputnumber .p-inputnumber-input) {
-    width: 60px;
-}
-.process-list-table :deep(tr.selected-row) {
-    background-color: rgba(204, 229, 255) !important;
-    color: inherit !important;
-}
+@import '@/assets/css/processFlow.css';
 </style>
